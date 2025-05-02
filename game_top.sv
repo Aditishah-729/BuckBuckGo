@@ -80,38 +80,38 @@ localparam BODY_H   = 10;
 localparam CAP_W    = 50;
 localparam CAP_H    = 27;
 
-localparam integer FPS          = 60;     // 640×480/60 Hz
-localparam integer WAIT_FRAMES  = 3*FPS;  // 180 frames ≈ 3 s
+localparam integer FPS          = 60;
+localparam integer WAIT_FRAMES  = 3*FPS;
 
-reg [8:0]  frame_wait_cnt = 0;            // 0-180 needs 8 bits
-reg        freeze_game    = 1'b0;         // 1 while we are pausing
+reg [8:0]  frame_wait_cnt = 0;
+reg        freeze_game    = 1'b0;
 
 
 wire [5:0]  num_tiles =
-        (obstacle_height_bottom + (BODY_H-1)) / BODY_H;   // max 48 (480/10)
+        (obstacle_height_bottom + (BODY_H-1)) / BODY_H;
 
-wire [9:0]  round_h   = num_tiles * BODY_H;               // 0-480 in steps of 10
+wire [9:0]  round_h   = num_tiles * BODY_H;
 wire        pipe_x_hit = (pixel_x >= obstacle_x) &&
                          (pixel_x <  obstacle_x + PIPE_W);
 
 wire [6:0]  body_u     = pixel_x - obstacle_x;            // 0-19
 
-// y = 0 on the *first* pipe row just above ground_y-1
+
 wire [9:0]  y_local    = ground_y - 1 - pixel_y;          // grows upward
 wire [4:0]  row_in_tile= y_local % BODY_H;                // 0-9  (wraps)
 wire        pipe_y_hit = (y_local < round_h);             // inside pipe?
 
 
-// STACKING LOGIC END
+
 wire [9:0]  body_addr  = row_in_tile * PIPE_W + body_u;
 
 
 // CAP LOGIC
 localparam CAP_X_OFFS  = 4;   // =15 px each side
 
-// left / right edges of the cap sprite
-wire [9:0] cap_x0 = obstacle_x - CAP_X_OFFS;   // 15 px left of body
-wire [9:0] cap_x1 = cap_x0 + CAP_W;            // cap_x0 … cap_x0+49
+
+wire [9:0] cap_x0 = obstacle_x - CAP_X_OFFS;
+wire [9:0] cap_x1 = cap_x0 + CAP_W;
 
 // vertical extent for each cap
 wire [9:0] cap_bot_y0 = ground_y - obstacle_height_bottom - CAP_H;  // start
@@ -120,7 +120,7 @@ wire [9:0] cap_bot_y1 = ground_y - obstacle_height_bottom;          // end
 wire [9:0] cap_top_y0 = obstacle_height_top;           // start
 wire [9:0] cap_top_y1 = obstacle_height_top + CAP_H;   // end
 
-// pixel is inside either cap?
+
 wire cap_bot_en = (pixel_x >= cap_x0) && (pixel_x < cap_x1) &&
                   (pixel_y >= cap_bot_y0) && (pixel_y < cap_bot_y1);
 
@@ -129,20 +129,18 @@ wire cap_top_en = (pixel_x >= cap_x0) && (pixel_x < cap_x1) &&
 
 wire cap_hit = cap_bot_en | cap_top_en;
 
-// local (u,v) inside the 50×27 bitmap
+
 wire [5:0] cap_u = pixel_x - cap_x0;                       // 0-49
 wire [4:0] cap_v = cap_bot_en ? (pixel_y - cap_bot_y0)     // 0-26
                               : (pixel_y - cap_top_y0);
 
-// final address (11 bits are enough for 50×27 = 1350 locations)
+
 wire [10:0] cap_addr = cap_v * CAP_W + cap_u;
 
   wire [31:0] pillar_pixel;
   // Obstacle ROM
   wire [31:0] cap_rgb;
-//   wire [8:0] cap_addr;
 
-// assign cap_addr 
 
   obstacle Obstacle_data(
 		.clk_clk(clk),                        //                 clk.clk
@@ -172,9 +170,7 @@ wire [10:0] cap_addr = cap_v * CAP_W + cap_u;
     //-------------------------------------------------------------------------
   // Sprite address calculation
   //-------------------------------------------------------------------------
-  /*wire sprite_active =
-       (pixel_x >= char_x) && (pixel_x <  char_x + SPRITE_W) &&
-       (pixel_y >= char_y) && (pixel_y <  char_y + SPRITE_H);*/
+
 
 wire [4:0]  sprite_u    = pixel_x - char_x;  
 wire [4:0]  sprite_v    = pixel_y - char_y;  
@@ -306,11 +302,11 @@ always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         freeze_game <= 1'b0;
     end
-    else if (game_status == 1'b1) begin           // crash detected
-        freeze_game <= 1'b1;                   // freeze everything
+    else if (game_status == 1'b1) begin
+        freeze_game <= 1'b1;
     end
-    else if (freeze_game && key3_press) begin     // counting down
-        freeze_game <= 1'b0;               // 3 s elapsed → un-freeze
+    else if (freeze_game && key3_press) begin
+        freeze_game <= 1'b0;
     end
 end
 
@@ -550,12 +546,7 @@ always @(posedge clk) begin
                 iGreen <= pillar_pixel[15:8];
                 iBlue <= pillar_pixel[7:0];
             end
-            // Draw ground
-            /*else if (pixel_y >= ground_y) begin
-                iRed <= 10'h000;
-                iGreen <= 10'h3FF;
-                iBlue <= 10'h000;
-            end*/
+
             // Draw score
             else if ((pixel_y >= 50) && (pixel_y < (50 + 7*FONT_SCALE))) begin
                 for (char_idx = 0; char_idx < 9; char_idx = char_idx + 1) begin
